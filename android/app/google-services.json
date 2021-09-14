@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "668907824332",
+    "project_id": "ruasp0509-396bb",
+    "storage_bucket": "ruasp0509-396bb.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:668907824332:android:9a1e7930c6ae0976100e69",
+        "android_client_info": {
+          "package_name": "br.com.pscruas.gifs"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "668907824332-k9hh9ma0iaoqsse4tgs2tjlc8ctuq72i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYCUS6rKnKtgojmNEul5SmQdCVp1AFkN4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "668907824332-k9hh9ma0iaoqsse4tgs2tjlc8ctuq72i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "668907824332-lv56jf66c839ngsidhk9tnk8crnh9qjj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "br.com.pscruas.gifs"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
