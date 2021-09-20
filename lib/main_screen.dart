@@ -22,11 +22,31 @@ class _MainScreenState extends State<MainScreen> {
   final box = GetStorage();
   List<String> favorites = [];
 
-  
-
   final fieldController = TextEditingController();
 
-  void getFavorites() {
+  //  Vinculo com FB
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+  // Vinculo com a collection que criamos
+  CollectionReference gifsFavoriteFB =
+      FirebaseFirestore.instance.collection('gifsFavorite');
+
+  /// Metodo que busca todos os dados da collection
+  Future<void> getFavoritesFB() async {
+    QuerySnapshot querySnapshot = await gifsFavoriteFB.get();
+
+    final allData = querySnapshot.docs.map((doc) => doc.data()).toList();
+
+    print(allData);
+    for (int i = 0; i < allData.length; i++) {
+      favorites.add(allData[i]["idGif"]);
+    }
+  }
+
+  void getFavorites() async {
+    await getFavoritesFB();
+    if (favorites.length > 0) {
+      return;
+    }
     final List<dynamic> f = box.read('favorites');
 
     if (f != null) {
@@ -48,6 +68,27 @@ class _MainScreenState extends State<MainScreen> {
     }
     return false;
   }
+
+  void clickFavorite(int index) {
+    if (isFavorited(id: gifsUrls[index]["id"])) {
+      favorites.remove(gifsUrls[index]["id"]);
+    } else {
+      favorites.add(gifsUrls[index]["id"]);
+      addFavoriteFB(gifsUrls[index]["id"]);
+    }
+    box.write('favorites', favorites);
+  }
+
+  Future<void> addFavoriteFB(String id) async {
+    return gifsFavoriteFB
+          .add({
+            'idGif': id,
+            'isFavorite': true,
+          })
+          .then((value) => print("User Added"))
+          .catchError((error) => print("Failed to add user: $error"));
+  }
+  Future<void> removeFavoriteFB(String id) async {}
 
   @override
   void initState() {
@@ -215,21 +256,13 @@ class _MainScreenState extends State<MainScreen> {
                                 child: ElevatedButton(
                                   onPressed: () {
                                     setState(() {
-                                      if (isFavorited(
-                                          id: gifsUrls[index]["id"])) {
-                                        favorites
-                                            .remove(gifsUrls[index]["id"]);
-                                      } else {
-                                        favorites.add(gifsUrls[index]["id"]);
-                                      }
-                                      box.write('favorites', favorites);
+                                      clickFavorite(index);
                                     });
                                   },
-                                  child:
-                                      isFavorited(id: gifsUrls[index]["id"])
-                                          ? Icon(Icons.favorite,
-                                              color: Colors.white)
-                                          : Icon(Icons.favorite_outline),
+                                  child: isFavorited(id: gifsUrls[index]["id"])
+                                      ? Icon(Icons.favorite,
+                                          color: Colors.white)
+                                      : Icon(Icons.favorite_outline),
                                   style: ElevatedButton.styleFrom(
                                     shape: CircleBorder(),
                                   ),
