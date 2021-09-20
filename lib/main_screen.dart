@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:gif_app/favorites_screen.dart';
 import 'package:gif_app/presentation_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:transparent_image/transparent_image.dart';
@@ -72,6 +73,7 @@ class _MainScreenState extends State<MainScreen> {
   void clickFavorite(int index) {
     if (isFavorited(id: gifsUrls[index]["id"])) {
       favorites.remove(gifsUrls[index]["id"]);
+      removeFavoriteFB(gifsUrls[index]["id"]);
     } else {
       favorites.add(gifsUrls[index]["id"]);
       addFavoriteFB(gifsUrls[index]["id"]);
@@ -81,14 +83,22 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<void> addFavoriteFB(String id) async {
     return gifsFavoriteFB
-          .add({
+        .doc(id)
+        .set({
             'idGif': id,
             'isFavorite': true,
           })
           .then((value) => print("User Added"))
           .catchError((error) => print("Failed to add user: $error"));
   }
-  Future<void> removeFavoriteFB(String id) async {}
+
+  Future<void> removeFavoriteFB(String id) async {
+    return gifsFavoriteFB
+        .doc(id)
+        .delete()
+        .then((value) => print("User Deleted"))
+        .catchError((error) => print("Failed to delete user: $error"));
+  }
 
   @override
   void initState() {
