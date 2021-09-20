@@ -168,10 +168,21 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: Colors.grey.shade900,
-        appBar: AppBar(
-          title: Text("Gifs app"),
-          centerTitle: true,
+        appBar: AppBar(title: Text("Gifs app"), centerTitle: true, actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            child: IconButton(
+              icon: Icon(Icons.favorite),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => FavoritesScreen(),
         ),
+                );
+              },
+            ),
+          ),
+        ]),
         body: Visibility(
           visible: !isLoading,
           child: Column(
