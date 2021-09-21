@@ -1,14 +1,10 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:gif_app/core/get_controllers/gifs_controller.dart';
 import 'package:gif_app/favorites_screen.dart';
 import 'package:gif_app/presentation_screen.dart';
-import 'package:http/http.dart' as http;
 import 'package:transparent_image/transparent_image.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MainScreen extends StatefulWidget {
   @override
@@ -19,133 +15,15 @@ class _MainScreenState extends State<MainScreen> {
   String search;
   int offset = 0;
   bool isLoading = false;
-  List<dynamic> gifsUrls = [];
-  final box = GetStorage();
-  List<String> favorites = [];
-
+  final gifsController = Get.find<GifsController>();
   final fieldController = TextEditingController();
-
-  //  Vinculo com FB
-  FirebaseFirestore firestore = FirebaseFirestore.instance;
-  // Vinculo com a collection que criamos
-  CollectionReference gifsFavoriteFB =
-      FirebaseFirestore.instance.collection('gifsFavorite');
-
-  /// Metodo que busca todos os dados da collection
-  Future<void> getFavoritesFB() async {
-    QuerySnapshot querySnapshot = await gifsFavoriteFB.get();
-
-    final allData = querySnapshot.docs.map((doc) => doc.data()).toList();
-
-    print(allData);
-    for (int i = 0; i < allData.length; i++) {
-      favorites.add(allData[i]["idGif"]);
-    }
-  }
-
-  void getFavorites() async {
-    await getFavoritesFB();
-    if (favorites.length > 0) {
-      return;
-    }
-    final List<dynamic> f = box.read('favorites');
-
-    if (f != null) {
-      if (f != null && f.length > 0) {
-        for (var id in f) {
-          favorites.add(id);
-        }
-      }
-    } else {
-      favorites = [];
-    }
-  }
-
-  bool isFavorited({@required String id}) {
-    for (int i = 0; i < favorites.length; i++) {
-      if (favorites[i] == id) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  void clickFavorite(int index) {
-    if (isFavorited(id: gifsUrls[index]["id"])) {
-      favorites.remove(gifsUrls[index]["id"]);
-      removeFavoriteFB(gifsUrls[index]["id"]);
-    } else {
-      favorites.add(gifsUrls[index]["id"]);
-      addFavoriteFB(gifsUrls[index]["id"]);
-    }
-    box.write('favorites', favorites);
-  }
-
-  Future<void> addFavoriteFB(String id) async {
-    return gifsFavoriteFB
-        .doc(id)
-        .set({
-            'idGif': id,
-            'isFavorite': true,
-          })
-          .then((value) => print("User Added"))
-          .catchError((error) => print("Failed to add user: $error"));
-  }
-
-  Future<void> removeFavoriteFB(String id) async {
-    return gifsFavoriteFB
-        .doc(id)
-        .delete()
-        .then((value) => print("User Deleted"))
-        .catchError((error) => print("Failed to delete user: $error"));
-  }
 
   @override
   void initState() {
     super.initState();
-    getFavorites();
-    getGifs();
-  }
-
-  Future<void> getGifs() async {
-    setState(() => isLoading = true);
-
-    String endpointTrend =
-        "https://api.giphy.com/v1/gifs/trending?api_key=71fZ8yW6a6Z4Au0WrG4LfOeD2BZsHvTp";
-    String endpointSearch =
-        "https://api.giphy.com/v1/gifs/search?api_key=71fZ8yW6a6Z4Au0WrG4LfOeD2BZsHvTp&offset=$offset&limit=49&q=$search";
-    String endpoint;
-
-    if (search == null) {
-      endpoint = endpointTrend;
-    } else {
-      endpoint = endpointSearch;
-    }
-
-    http.Response response = await http.get(endpoint);
-
-    if (response.statusCode == 200) {
-      final convertedToMap = json.decode(response.body);
-
-      setState(() {
-        gifsUrls = convertedToMap["data"];
-      });
-      if (search == null) {
-        createToast(
-          "Seja Bem Vindo de Volta aos Trends!!!",
-          backgroundColor: Colors.green,
-        );
-      }
-    }
-    setState(() => isLoading = false);
-  }
-
-  int getCount() {
-    if (search == null) {
-      return gifsUrls.length;
-    } else {
-      return gifsUrls.length + 1;
-    }
+    gifsController.getFavorites().then((value) async {
+      await gifsController.getGifs(search: search, offset: offset);
+    });
   }
 
   createToast(
@@ -174,11 +52,11 @@ class _MainScreenState extends State<MainScreen> {
             child: IconButton(
               icon: Icon(Icons.favorite),
               onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => FavoritesScreen(),
-        ),
-                );
+                // Navigator.of(context).push(
+                //   MaterialPageRoute(
+                //     builder: (context) => FavoritesScreen(),
+                //   ),
+                // );
               },
             ),
           ),
@@ -198,7 +76,7 @@ class _MainScreenState extends State<MainScreen> {
                     }
                     offset = 0;
                     search = value;
-                    getGifs();
+                    gifsController.getGifs(search: search, offset: offset);
                   },
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
@@ -220,7 +98,7 @@ class _MainScreenState extends State<MainScreen> {
                         // pelo nome, vir do começo
                         offset = 0;
                         // voltar pros trends
-                        getGifs();
+                        gifsController.getGifs(search: search, offset: offset);
                       },
                     ),
                     fillColor: Colors.white,
@@ -228,7 +106,7 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                 ),
               ),
-              if (gifsUrls.isEmpty)
+              if (gifsController.gifsUrls.isEmpty)
                 Expanded(
                   child: Container(
                     alignment: Alignment.center,
@@ -244,79 +122,88 @@ class _MainScreenState extends State<MainScreen> {
                 )
               else
                 Expanded(
-                  child: GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                    ),
-                    itemCount: getCount(),
-                    itemBuilder: (_, index) {
-                      if (search == null || index < gifsUrls.length) {
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (c) => PresentationScreen(
-                                  gifUrl: gifsUrls[index]["images"]
-                                      ["fixed_height"]["url"],
-                                ),
-                              ),
-                            );
-                          },
-                          child: Stack(
-                            children: [
-                              FadeInImage.memoryNetwork(
-                                height: 250,
-                                width: 250,
-                                placeholder: kTransparentImage,
-                                image: gifsUrls[index]["images"]["fixed_height"]
-                                    ["url"],
-                                fit: BoxFit.cover,
-                              ),
-                              Align(
-                                alignment: Alignment.topRight,
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      clickFavorite(index);
-                                    });
-                                  },
-                                  child: isFavorited(id: gifsUrls[index]["id"])
-                                      ? Icon(Icons.favorite,
-                                          color: Colors.white)
-                                      : Icon(Icons.favorite_outline),
-                                  style: ElevatedButton.styleFrom(
-                                    shape: CircleBorder(),
+                  child: GetX<GifsController>(
+                    builder: (){
+                      return GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                      ),
+                      itemCount: gifsController.getCount(search),
+                      itemBuilder: (_, index) {
+                        if (search == null ||
+                            index < gifsController.gifsUrls.length) {
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (c) => PresentationScreen(
+                                    gifUrl: gifsController.gifsUrls[index]
+                                        ["images"]["fixed_height"]["url"],
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        );
-                      } else {
-                        return InkWell(
-                          onTap: () {
-                            offset += 49;
-                            getGifs();
-                          },
-                          child: Ink(
-                            color: Colors.black,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                              );
+                            },
+                            child: Stack(
                               children: [
-                                Text(
-                                  "Carregar mais",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                                FadeInImage.memoryNetwork(
+                                  height: 250,
+                                  width: 250,
+                                  placeholder: kTransparentImage,
+                                  image: gifsController.gifsUrls[index]
+                                      ["images"]["fixed_height"]["url"],
+                                  fit: BoxFit.cover,
+                                ),
+                                Align(
+                                  alignment: Alignment.topRight,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        gifsController.clickFavorite(index);
+                                      });
+                                    },
+                                    child: gifsController.isFavorited(
+                                            id: gifsController.gifsUrls[index]
+                                                ["id"])
+                                        ? Icon(Icons.favorite,
+                                            color: Colors.white)
+                                        : Icon(Icons.favorite_outline),
+                                    style: ElevatedButton.styleFrom(
+                                      shape: CircleBorder(),
+                                    ),
                                   ),
                                 ),
-                                Icon(Icons.refresh, color: Colors.white),
                               ],
                             ),
-                          ),
-                        );
-                      }
-                    },
+                          );
+                        } else {
+                          return InkWell(
+                            onTap: () {
+                              offset += 49;
+                              gifsController.getGifs(
+                                  search: search, offset: offset);
+                            },
+                            child: Ink(
+                              color: Colors.black,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "Carregar mais",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Icon(Icons.refresh, color: Colors.white),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    );
+                    }
+                     
                   ),
                 ),
             ],
