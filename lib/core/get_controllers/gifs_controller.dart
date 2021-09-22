@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 
 class GifsController extends GetxController {
   final box = GetStorage();
-  List<String> favorites = [];
+  RxList<String> favorites = List<String>().obs;
   RxList<dynamic> gifsUrls = List<dynamic>().obs;
 
   bool isFavorited({@required String id}) {
@@ -19,7 +19,7 @@ class GifsController extends GetxController {
     }
     return false;
   }
-
+ 
   void clickFavorite(int index) {
     if (isFavorited(id: gifsUrls[index]["id"])) {
       favorites.remove(gifsUrls[index]["id"]);
@@ -82,7 +82,7 @@ class GifsController extends GetxController {
         }
       }
     } else {
-      favorites = [];
+      favorites = new List<String>();
     }
   }
 
